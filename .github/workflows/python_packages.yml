@@ -31,33 +31,6 @@ jobs:
           path: ./wheelhouse/*.whl
           name: dist-manylinux_2_28
 
-  build_linux_wheels_manylinux2014:
-    name: Build wheels for manylinux2014
-    runs-on: ubuntu-latest
-    env:
-      CIBW_SKIP: pp* cp27-* cp35-* cp36-* *-i686 *musllinux*
-      CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-      CIBW_MANYLINUX_I686_IMAGE: manylinux2014
-      CIBW_BEFORE_ALL_LINUX: yum install -y sqlite-devel
-      CIBW_BEFORE_BUILD: pip install setuptools scikit-build wheel cmake
-      CIBW_TEST_COMMAND: python -c "import pygeodiff; pygeodiff.GeoDiff().version()"
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-python@v3
-        name: Install Python
-        with:
-          python-version: '3.9'
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.20.0
-
-      - uses: actions/upload-artifact@v4
-        with:
-          path: ./wheelhouse/*.whl
-          name: dist-manylinux2014
-
   build_linux_wheels_musllinux_x86_64:
     name: Build wheels for musllinux_x86_64 (alpine)
     runs-on: ubuntu-latest
@@ -187,41 +160,6 @@ jobs:
           path: ./wheelhouse/*.whl
           name: dist-macos_arm64
 
-  build_macos_wheels:
-    name: Build wheels on macos-13
-    runs-on: macos-13
-    env:
-        SQLite3_ROOT: ${{ github.workspace }}/libs
-        MACOSX_DEPLOYMENT_TARGET: '10.9'
-        CIBW_SKIP: cp27-* cp35-* cp36-*
-        CIBW_TEST_COMMAND: python -c "import pygeodiff; pygeodiff.GeoDiff().version()"
-        CIBW_BEFORE_ALL: >
-          wget https://www.sqlite.org/2024/sqlite-autoconf-3460100.tar.gz &&
-          tar -xzvf sqlite-autoconf-3460100.tar.gz &&
-          cd sqlite-autoconf-3460100 &&
-          CC=clang CFLAGS="-arch x86_64 -O3 -DSQLITE_ENABLE_FTS4 -DSQLITE_ENABLE_RTREE -DSQLITE_ENABLE_COLUMN_METADATA" ./configure --enable-dynamic-extensions --prefix=${{ github.workspace }}/libs/ &&
-          make install
-          
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: actions/setup-python@v3
-        name: Install Python
-        with:
-          python-version: '3.9'
-
-      - name: Install Deps
-        run: |
-          pip install setuptools scikit-build wheel cmake
-
-      - name: Build wheels
-        uses: pypa/cibuildwheel@v2.20.0
-
-      - uses: actions/upload-artifact@v4
-        with:
-          path: ./wheelhouse/*.whl
-          name: dist-macos
-
   build_sdist:
     name: Build source distribution
     runs-on: ubuntu-latest
@@ -247,7 +185,7 @@ jobs:
           name: dist-source
 
   upload_pypi:
-    needs: [build_windows_wheels, build_linux_wheels_manylinux_2_28, build_linux_wheels_manylinux2014, build_linux_wheels_musllinux_x86_64, build_macos_wheels, build_macos_arm64_wheels, build_sdist]
+    needs: [build_windows_wheels, build_linux_wheels_manylinux_2_28, build_linux_wheels_musllinux_x86_64, build_macos_arm64_wheels, build_sdist]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (startsWith(github.ref, 'refs/tags') || github.event_name == 'workflow_dispatch')
     steps:
