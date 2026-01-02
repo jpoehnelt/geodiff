@@ -1,6 +1,8 @@
 name: Build and upload to PyPI
 
-on: [push]
+on:
+  push:
+  workflow_dispatch:
 jobs:
   build_linux_wheels_manylinux_2_28:
     name: Build wheels for manylinux_2_28
@@ -155,6 +157,7 @@ jobs:
     env:
         SQLite3_ROOT: ${{ github.workspace }}/libs
         MACOSX_DEPLOYMENT_TARGET: '14.0'
+        CIBW_ARCHS: "arm64"
         CIBW_SKIP: cp27-* cp35-* cp36-*
         CIBW_TEST_COMMAND: python -c "import pygeodiff; pygeodiff.GeoDiff().version()"
         CIBW_BEFORE_ALL: >
@@ -254,6 +257,11 @@ jobs:
           merge-multiple: true
           path: dist
 
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
